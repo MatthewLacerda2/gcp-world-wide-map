@@ -1,5 +1,10 @@
-export class CreateHopDto {
+export class HopDto {
   origin: string;
   destination: string;
-  latency: number;
+  ping: number;
+}
+
+export class CreateHopDto {
+  hops: HopDto[];
+  region: string;
 }

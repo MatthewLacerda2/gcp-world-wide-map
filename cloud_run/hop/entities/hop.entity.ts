@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class Hop {
@@ -12,5 +12,8 @@ export class Hop {
   destination: string;
 
   @Column('float')
-  latency: number;
+  ping: number;
+
+  @Column()
+  region: string;
 }

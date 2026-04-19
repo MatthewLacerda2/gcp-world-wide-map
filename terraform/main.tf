@@ -39,5 +39,5 @@ resource "google_compute_instance" "traceroute_vms" {
     access_config {}
   }
 
-  metadata_startup_script = "echo 'Starting traceroute node...'"
+  metadata_startup_script = "python3 /path/to/traceroute_vm.py --region ${each.key}"
 }

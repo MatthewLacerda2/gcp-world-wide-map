@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, HttpCode, HttpStatus } from '@nestjs/commo
 import { HopService } from './hop.service';
 import { CreateHopDto } from './dto/create-hop.dto';
 
-@Controller('hop')
+@Controller('api/traceroutes')
 export class HopController {
   constructor(private readonly hopService: HopService) {}
 
@@ -13,8 +13,8 @@ export class HopController {
 
   @Post()
   @HttpCode(HttpStatus.OK)
-  create(@Body() createHopDto: CreateHopDto) {
-    // As requested, return 200 OK without implementation
+  async create(@Body() createHopDto: CreateHopDto) {
+    await this.hopService.createMany(createHopDto);
     return { status: 'ok' };
   }
 }
