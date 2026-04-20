@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Hop } from './hop/entities/hop.entity';
+import { Location } from './hop/entities/location.entity';
+import { IpLocation } from './hop/entities/ip-location.entity';
 import { HopModule } from './hop/hop.module';
 
 @Module({
@@ -12,7 +14,7 @@ import { HopModule } from './hop/hop.module';
       username: 'user',
       password: 'password',
       database: 'mydb',
-      entities: [Hop],
+      entities: [Hop, Location, IpLocation],
       synchronize: true, // use migrations in prod
     }),
     HopModule,
