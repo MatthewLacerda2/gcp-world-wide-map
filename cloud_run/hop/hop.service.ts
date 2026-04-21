@@ -25,19 +25,28 @@ export class HopService {
 
     // Create a map for quick lookup: ip -> location
     const locationMap = new Map<string, Location>();
-    console.log(`Found ${ipLocations.length} IP locations:`, ipLocations.map(il => `${il.ip} -> ${il.location?.city}`));
     ipLocations.forEach((il) => {
       locationMap.set(il.ip, il.location);
     });
 
     return {
-      hops: hops.map((h) => ({
-        origin_ip: h.origin,
-        origin_location: locationMap.get(h.origin) || null,
-        destination_ip: h.destination,
-        destination_location: locationMap.get(h.destination) || null,
-        ping: h.ping,
-      })),
+      hops: hops.map((h) => {
+        const origin_location = locationMap.get(h.origin) || null;
+        const destination_location = locationMap.get(h.destination) || null;
+        
+        let ping = h.ping;
+        if (origin_location && destination_location) {
+          ping = this.clampPing(h.ping, origin_location, destination_location);
+        }
+
+        return {
+          origin_ip: h.origin,
+          origin_location,
+          destination_ip: h.destination,
+          destination_location,
+          ping,
+        };
+      }),
     };
   }
 
@@ -65,7 +74,6 @@ export class HopService {
       }
     }
 
-    // Trigger geolocation resolution for all unique IPs in background
     const ips = new Set<string>();
     hops.forEach(h => {
       ips.add(h.origin);
@@ -77,7 +85,7 @@ export class HopService {
   private async resolveGeolocations(ips: string[]) {
     for (const ip of ips) {
       try {
-        if (ip === 'localhost' || ip === 'unknown') continue;
+        if (ip === 'localhost' || ip === 'unknown' || ip.startsWith('192.168.') || ip.startsWith('10.')) continue;
 
         const existingIpLoc = await this.ipLocationRepository.findOne({ where: { ip } });
         if (existingIpLoc) continue;
@@ -85,28 +93,61 @@ export class HopService {
         const response = await fetch(`https://ipwhois.app/json/${ip}`);
         const data = await response.json();
 
-        if (data && data.success) {
-          const { latitude, longitude, city, region, country } = data;
-          
-          let location = await this.locationRepository.findOne({
-            where: { latitude, longitude }
-          });
-
-          if (!location) {
-            location = this.locationRepository.create({
-              latitude, longitude, city, region, country
-            });
-            await this.locationRepository.save(location);
-          }
-
-          await this.ipLocationRepository.save({
-            ip,
-            locationId: location.id
-          });
-        }
+        await this.fetchIpLocation(ip, data);
+        
+        // Respect rate limit of 1 request per second
+        await new Promise(resolve => setTimeout(resolve, 1000));
       } catch (error) {
         console.error(`Geolocation error for ${ip}:`, error);
       }
     }
+  }
+
+  private async fetchIpLocation(ip: string, data: any) {
+    if (data && data.success) {
+      const { latitude, longitude, city, region, country } = data;
+      
+      let location = await this.locationRepository.findOne({
+        where: { latitude, longitude }
+      });
+
+      if (!location) {
+        location = this.locationRepository.create({
+          latitude, longitude, city, region, country
+        });
+        await this.locationRepository.save(location);
+      }
+
+      await this.ipLocationRepository.save({
+        ip,
+        locationId: location.id
+      });
+    }
+  }
+
+  private clampPing(ping: number, origin: Location, destination: Location): number {
+    const SPEED_OF_LIGHT_METERS = 299792458;
+    const SPEED_MULTIPLIER = 3;
+
+    const distanceMeters = this.calculateDistance(
+      origin.latitude, origin.longitude,
+      destination.latitude, destination.longitude
+    );
+    
+    const minPing = (distanceMeters * SPEED_MULTIPLIER) / SPEED_OF_LIGHT_METERS * 1000;
+    
+    return Math.max(ping, minPing);
+  }
+
+  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const EARTH_RADIUS_METERS = 6371000;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return EARTH_RADIUS_METERS * c;
   }
 }
