@@ -1,13 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as fs from 'fs';
+import * as path from 'path';
 import { Repository } from 'typeorm';
 import { CreateHopDto } from './dto/create-hop.dto';
 import { Hop } from './entities/hop.entity';
 import { IpLocation } from './entities/ip-location.entity';
 import { Location } from './entities/location.entity';
+import { calculateDistance, findGeozone, Geozone, MAX_LAND_HOP_DISTANCE_KM, SPEED_MULTIPLIER, SPEED_OF_LIGHT_METERS } from './hop.utils';
 
 @Injectable()
 export class HopService {
+  private geozones: Geozone[] = [];
+
   constructor(
     @InjectRepository(Hop)
     private hopRepository: Repository<Hop>,
@@ -15,7 +20,25 @@ export class HopService {
     private locationRepository: Repository<Location>,
     @InjectRepository(IpLocation)
     private ipLocationRepository: Repository<IpLocation>,
-  ) {}
+  ) {
+    this.loadGeozones();
+  }
+
+  private loadGeozones() {
+    try {
+      const filePath = path.join(__dirname, 'geozones.json');
+      if (fs.existsSync(filePath)) {
+        const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        this.geozones = data.features.map((f: any) => ({
+          id: f.properties.id,
+          name: f.properties.name,
+          polygon: f.geometry.coordinates[0],
+        }));
+      }
+    } catch (e) {
+      console.error('Failed to load geozones:', e);
+    }
+  }
 
   async findAll(): Promise<any> {
     const [hops, ipLocations] = await Promise.all([
@@ -23,31 +46,55 @@ export class HopService {
       this.ipLocationRepository.find({ relations: ['location'] }),
     ]);
 
-    // Create a map for quick lookup: ip -> location
     const locationMap = new Map<string, Location>();
     ipLocations.forEach((il) => {
       locationMap.set(il.ip, il.location);
     });
 
-    return {
-      hops: hops.map((h) => {
-        const origin_location = locationMap.get(h.origin) || null;
-        const destination_location = locationMap.get(h.destination) || null;
-        
-        let ping = h.ping;
-        if (origin_location && destination_location) {
-          ping = this.clampPing(h.ping, origin_location, destination_location);
-        }
+    const results = [];
+    for (const h of hops) {
+      const origin_location = locationMap.get(h.origin) || null;
+      const destination_location = locationMap.get(h.destination) || null;
+      
+      const hopObj = {
+        origin_ip: h.origin,
+        origin_location,
+        destination_ip: h.destination,
+        destination_location,
+        ping: h.ping,
+      };
 
-        return {
-          origin_ip: h.origin,
-          origin_location,
-          destination_ip: h.destination,
-          destination_location,
-          ping,
-        };
-      }),
-    };
+      if (this.isPossibleHop(hopObj)) {
+        if (origin_location && destination_location) {
+          hopObj.ping = this.clampPing(h.ping, origin_location, destination_location);
+        }
+        results.push(hopObj);
+      } else {
+        console.log(`Deleting impossible hop: ${h.origin} -> ${h.destination}`);
+        await this.hopRepository.delete(h.id);
+      }
+    }
+
+    return { hops: results };
+  }
+
+  private isPossibleHop(h: any): boolean {
+    if (!h.origin_location || !h.destination_location) return true;
+
+    const distanceMeters = calculateDistance(
+      h.origin_location.latitude, h.origin_location.longitude,
+      h.destination_location.latitude, h.destination_location.longitude
+    );
+    const distanceKm = distanceMeters / 1000;
+
+    if (distanceKm <= MAX_LAND_HOP_DISTANCE_KM) return true;
+
+    // Longer than 3000km, must be a known undersea cable / geozone
+    const originZone = findGeozone(h.origin_location.latitude, h.origin_location.longitude, this.geozones);
+    const destZone = findGeozone(h.destination_location.latitude, h.destination_location.longitude, this.geozones);
+
+    // If both are in the same zone (e.g. North Atlantic), it's possible
+    return originZone !== null && destZone !== null && originZone === destZone;
   }
 
   async createMany(createHopDto: CreateHopDto): Promise<void> {
@@ -126,10 +173,7 @@ export class HopService {
   }
 
   private clampPing(ping: number, origin: Location, destination: Location): number {
-    const SPEED_OF_LIGHT_METERS = 299792458;
-    const SPEED_MULTIPLIER = 3;
-
-    const distanceMeters = this.calculateDistance(
+    const distanceMeters = calculateDistance(
       origin.latitude, origin.longitude,
       destination.latitude, destination.longitude
     );
@@ -137,17 +181,5 @@ export class HopService {
     const minPing = (distanceMeters * SPEED_MULTIPLIER) / SPEED_OF_LIGHT_METERS * 1000;
     
     return Math.max(ping, minPing);
-  }
-
-  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const EARTH_RADIUS_METERS = 6371000;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return EARTH_RADIUS_METERS * c;
   }
 }

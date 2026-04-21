@@ -3,6 +3,9 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": ".",
   "compilerOptions": {
-    "deleteOutDir": true
+    "deleteOutDir": true,
+    "assets": [
+      { "include": "hop/geozones.json", "outDir": "dist/hop" }
+    ]
   }
 }
