@@ -5,7 +5,7 @@ import argparse
 import requests
 import subprocess
 
-BACKEND_URL = "http://localhost:3000/api/traceroutes"  #TODO: update with Cloud Run URL
+BACKEND_URL = "https://world-wide-map-backend-494720044321.us-central1.run.app/api/traceroutes"
 TARGETS_FILE = "targets.json"
 
 def run_traceroute(target):

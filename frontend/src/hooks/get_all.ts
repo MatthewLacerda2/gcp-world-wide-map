@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export interface LocationData {
   id: number;
@@ -21,7 +21,7 @@ export interface FetchResult {
   hops: HopData[];
 }
 
-const BACKEND_URL = 'http://localhost:3000/api/traceroutes';
+const BACKEND_URL = 'https://world-wide-map-backend-494720044321.us-central1.run.app/api/traceroutes';
 
 export const useTraceroutes = () => {
   const [data, setData] = useState<FetchResult | null>(null);
