@@ -12,7 +12,8 @@ def run_traceroute(target):
     print(f"Tracerouting to {target}...")
     try:
         result = subprocess.run(
-            ["traceroute", "-4", "-I", "-n", "-q", "1", target],
+            #GCP gives sudo privileges by default
+            ["sudo", "traceroute", "-4", "-I", "-n", target],
             capture_output=True,
             text=True,
             timeout=60
@@ -48,11 +49,11 @@ def parse_hops(output):
             
         current_ip = ip_match.group(1) or ip_match.group(2)
             
-        ping_match = re.search(r'(\d+\.?\d*)\s+ms', line)
-        if not ping_match:
+        pings = [float(p) for p in re.findall(r'(\d+\.?\d*)\s+ms', line)]
+        if not pings:
             continue
             
-        cumulative_latency = float(ping_match.group(1))
+        cumulative_latency = min(pings)
 
         if last_ip is not None and last_ping is not None:
             # The edge latency to the next hop is current hop's ping minus the previous hop's ping.
@@ -108,8 +109,8 @@ def main():
         except Exception as e:
             print(f"Failed to send data to backend: {e}")
 
-    print("All tasks completed. Shutting down...")
-    os.system("sudo shutdown -h now")
+    print("All tasks completed. Finished.")
+    #os.system("sudo shutdown -h now")
 
 if __name__ == "__main__":
     main()

@@ -1,12 +1,12 @@
-import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
+import 'reflect-metadata';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   // Optional: Global validation pipe could be added here
   // app.useGlobalPipes(new ValidationPipe());
-  
-  await app.listen(3000);
+  app.enableCors();
+  await app.listen(3000, "0.0.0.0");
 }
 bootstrap();

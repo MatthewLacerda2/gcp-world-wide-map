@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Location } from './location.entity';
 
 @Entity()
@@ -13,5 +13,6 @@ export class IpLocation {
   locationId: number;
 
   @ManyToOne(() => Location)
+  @JoinColumn({ name: 'locationId' })
   location: Location;
 }

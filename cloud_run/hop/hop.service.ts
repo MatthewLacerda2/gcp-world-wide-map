@@ -25,6 +25,7 @@ export class HopService {
 
     // Create a map for quick lookup: ip -> location
     const locationMap = new Map<string, Location>();
+    console.log(`Found ${ipLocations.length} IP locations:`, ipLocations.map(il => `${il.ip} -> ${il.location?.city}`));
     ipLocations.forEach((il) => {
       locationMap.set(il.ip, il.location);
     });
