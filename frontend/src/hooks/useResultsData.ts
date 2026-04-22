@@ -4,8 +4,8 @@ import type { ResultsData } from "../types";
 import { calculateDistance, findGeozone, MAX_LAND_HOP_DISTANCE_KM } from "../utils";
 
 // Static Gist URL (for free hosting)
-const API_URL = "https://world-wide-map-backend-494720044321.us-central1.run.app/api/traceroutes";
-//const API_URL = "https://gist.githubusercontent.com/MatthewLacerda2/18b7c0081f4b4fd4efdc9e67f4675e02/raw/51a2d96346cc5189a0a4a8e960d0e1f2a862df85/gcp-traceroute";
+//const API_URL = "https://world-wide-map-backend-494720044321.us-central1.run.app/api/traceroutes";
+const API_URL = "https://gist.githubusercontent.com/MatthewLacerda2/18b7c0081f4b4fd4efdc9e67f4675e02/raw/51a2d96346cc5189a0a4a8e960d0e1f2a862df85/gcp-traceroute";
 
 export function useResultsData() {
   const [data, setData] = useState<ResultsData>([]);
