@@ -22,8 +22,31 @@ By using VMs in different regions, we can get a more complete picture of the int
 We'll have a frontend that will fetch the data from the Master VM's api and display it
 The frontend is the only part of this not hosted on GCP (it's in Github Pages)
 
-## NOTE: since i don't know how ip-geolocation deals with anycasted ip's, i won't differentiate them by region
+# How to run
 
-## This project is meant to show-off networking, not as a serious project. So if you wanna point out lack of auth, tests and how vibe-coded the thing is, fuck off
+## Online
 
-## There is no "updating the db". The whole "fleet of VMs mapping the web" is a one-time thing, and each of them turns off once the traceroutes are done. If we 'terraform apply' again, the machines will turn on, send the data and turn off. The cloud_run won't delete hops that no longer exist, it will just update the existing ones IF the ping is lower than before, and add new ones
+- Run 'terraform apply'
+- Wait for the VMs to finish
+You will get an api which gives a mesh of the internet's topology
+
+Switch the hardcoded url in the frontend to your cloud_run url
+
+## Local
+
+Switch the hardcoded url in the frontend to `http://localhost:3000`
+
+Postgre: `docker run -e POSTGRES_PASSWORD=Password123! -e POSTGRES_DB=mydb -p 5432:5432 -d postgres`
+NestJS: `npm i` `npm run start:dev`
+Frontend: `npm i` `npm run dev`
+
+You can then run the traceroute file with `cd traceroutes && python3 traceroute_vm.py`
+You can even have a friend join by just switching the url to your IP address (in case you have a static public ip, cloudflare tunnel or you guys are on tailscale)
+
+# NOTES
+
+Since i don't know how ip-geolocation deals with anycasted ip's, i won't differentiate them by region
+
+This project is meant to show-off networking, not as a serious project. So if you wanna point out lack of auth, tests and how vibe-coded the thing is, fuck off
+
+Each time you run 'terraform apply', the VMs will kick-in, traceroute, send the data to cloud_run. If cloud_run gets a new hop, it will write to the db. If it gets an existing one, it will update the ping and region if the ping is lower. It will NOT delete older hops. This was meant for a single "tracing run"
