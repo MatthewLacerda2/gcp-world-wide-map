@@ -25,3 +25,5 @@ The frontend is the only part of this not hosted on GCP (it's in Github Pages)
 ## NOTE: since i don't know how ip-geolocation deals with anycasted ip's, i won't differentiate them by region
 
 ## This project is meant to show-off networking, not as a serious project. So if you wanna point out lack of auth, tests and how vibe-coded the thing is, fuck off
+
+## There is no "updating the db". The whole "fleet of VMs mapping the web" is a one-time thing, and each of them turns off once the traceroutes are done. If we 'terraform apply' again, the machines will turn on, send the data and turn off. The cloud_run won't delete hops that no longer exist, it will just update the existing ones IF the ping is lower than before, and add new ones

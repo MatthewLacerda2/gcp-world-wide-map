@@ -41,7 +41,7 @@ export function NetworkEdge({ entry, index }: NetworkEdgeProps) {
   const destinationDisplay = `${entry.destination_geo.city}, ${entry.destination_geo.country}`;
   const pingDisplay =
     entry.pingTime !== null && entry.pingTime !== undefined
-      ? `${entry.pingTime} ms`
+      ? `${entry.pingTime.toFixed(2)} ms`
       : "N/A";
 
   return (
@@ -58,6 +58,7 @@ export function NetworkEdge({ entry, index }: NetworkEdgeProps) {
         destinationDisplay={destinationDisplay}
         pingDisplay={pingDisplay}
         distanceDisplay={distanceDisplay}
+        reportedBy={entry.region}
       />
     </Fragment>
   );

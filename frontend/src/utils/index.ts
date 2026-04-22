@@ -27,3 +27,34 @@ export function calculateDistance(
     Math.cos(lat1Rad) * Math.cos(lat2Rad) * Math.sin(dLon / 2) ** 2;
   return EARTH_RADIUS_METERS * 2 * Math.asin(Math.sqrt(a));
 }
+
+/**
+ * Ray-casting algorithm for point-in-polygon
+ */
+export function isPointInPolygon(lat: number, lon: number, polygon: [number, number][]): boolean {
+  let x = lon, y = lat;
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    let xi = polygon[i][0], yi = polygon[i][1];
+    let xj = polygon[j][0], yj = polygon[j][1];
+
+    if ((x === xi && y === yi) || (x === xj && y === yj)) return true;
+
+    let intersect = ((yi > y) !== (yj > y)) &&
+      (x < (xj - xi) * (y - yi) / (yj - yi + 1e-12) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
+export const MAX_LAND_HOP_DISTANCE_KM = 3000;
+
+export function findGeozone(lat: number, lon: number, zones: any[]): string | null {
+  for (const zone of zones) {
+    const polygon = zone.geometry.coordinates[0];
+    if (isPointInPolygon(lat, lon, polygon)) {
+      return zone.properties.id;
+    }
+  }
+  return null;
+}

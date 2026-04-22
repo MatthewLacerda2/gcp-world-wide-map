@@ -25,7 +25,6 @@ variable "traceroute_regions" {
   type        = list(string)
   default = [
     "us-central1",
-    "us-east1",
     "us-east4",
     "us-west1",
     "europe-west1",

@@ -5,7 +5,7 @@
   "compilerOptions": {
     "deleteOutDir": true,
     "assets": [
-      { "include": "hop/geozones.json", "outDir": "dist/hop" }
+      { "include": "hop/geozones.json", "outDir": "dist" }
     ]
   }
 }

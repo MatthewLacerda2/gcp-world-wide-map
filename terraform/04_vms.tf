@@ -9,7 +9,7 @@ locals {
   final_script = replace(
     local.orig_script,
     "https://world-wide-map-backend-494720044321.us-central1.run.app/api/traceroutes",
-    google_cloud_run_v2_service.backend.uri
+    "${google_cloud_run_v2_service.backend.uri}/api/traceroutes"
   )
   
   targets_content = file("${path.module}/../traceroutes/targets.json")
@@ -21,7 +21,7 @@ resource "google_compute_instance" "traceroute_vm" {
   project      = google_project.map_project.project_id
   name         = "traceroute-node-${each.key}"
   machine_type = "e2-micro" # Cheapest modern machine
-  zone         = "${each.key}-a"
+  zone         = "${each.key}-b"
 
   boot_disk {
     initialize_params {
@@ -57,7 +57,7 @@ resource "google_compute_instance" "traceroute_vm" {
     EOF
     
     # Run the script!
-    python3 traceroute_vm.py --region ${each.key}
+    python3 -u traceroute_vm.py --region ${each.key}
     
     # SELF DESTRUCT (Shut down to stop billing)
     sudo poweroff

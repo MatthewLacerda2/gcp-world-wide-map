@@ -13,6 +13,7 @@ interface EdgeWithTooltipProps {
   destinationDisplay: string;
   pingDisplay: string;
   distanceDisplay: string;
+  reportedBy: string;
 }
 
 export function EdgeWithTooltip({
@@ -24,6 +25,7 @@ export function EdgeWithTooltip({
   destinationDisplay,
   pingDisplay,
   distanceDisplay,
+  reportedBy,
 }: EdgeWithTooltipProps) {
   const [tooltipPosition, setTooltipPosition] = useState<{
     x: number;
@@ -83,6 +85,7 @@ export function EdgeWithTooltip({
             destinationDisplay={destinationDisplay}
             pingDisplay={pingDisplay}
             distanceDisplay={distanceDisplay}
+            reportedBy={reportedBy}
           />,
           mapContainer
         )}

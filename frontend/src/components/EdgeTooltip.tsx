@@ -4,6 +4,7 @@ interface EdgeTooltipProps {
   destinationDisplay: string;
   pingDisplay: string;
   distanceDisplay: string;
+  reportedBy: string;
 }
 
 export function EdgeTooltip({
@@ -12,6 +13,7 @@ export function EdgeTooltip({
   destinationDisplay,
   pingDisplay,
   distanceDisplay,
+  reportedBy,
 }: EdgeTooltipProps) {
   return (
     <div
@@ -44,6 +46,9 @@ export function EdgeTooltip({
         </div>
         <div>
           <strong>Distance:</strong> {distanceDisplay}
+        </div>
+        <div style={{ marginTop: "4px", paddingTop: "4px", borderTop: "1px solid rgba(255,255,255,0.2)", fontSize: "10px", color: "#aaa" }}>
+          <strong>Reported by:</strong> {reportedBy}
         </div>
       </div>
     </div>

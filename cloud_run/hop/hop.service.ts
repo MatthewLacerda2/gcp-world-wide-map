@@ -34,6 +34,9 @@ export class HopService {
           name: f.properties.name,
           polygon: f.geometry.coordinates[0],
         }));
+        console.log(`Successfully loaded ${this.geozones.length} geozones.`);
+      } else {
+        console.warn(`Geozones file not found at: ${filePath}`);
       }
     } catch (e) {
       console.error('Failed to load geozones:', e);
@@ -62,6 +65,7 @@ export class HopService {
         destination_ip: h.destination,
         destination_location,
         ping: h.ping,
+        region: h.region,
       };
 
       if (this.isPossibleHop(hopObj)) {
