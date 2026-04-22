@@ -8,12 +8,11 @@ import subprocess
 BACKEND_URL = "https://world-wide-map-backend-494720044321.us-central1.run.app/api/traceroutes"
 TARGETS_FILE = "targets.json"
 
-def run_traceroute(target):
-    print(f"Tracerouting to {target}...")
+def run_traceroute(target, flag):
+    print(f"Tracerouting to {target} with {flag}...")
     try:
         result = subprocess.run(
-            #GCP gives sudo privileges by default
-            ["sudo", "traceroute", "-4", "-I", "-n", target],
+            ["sudo", "traceroute", "-4", flag, "-n", target],
             capture_output=True,
             text=True,
             timeout=60
@@ -71,8 +70,8 @@ def parse_hops(output):
     return hops
 
 def main():
-    parser = argparse.ArgumentParser(description='Run traceroutes and report to backend.')
-    parser.add_argument('--region', type=str, help='The region this VM is running in', required=True)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--region", required=True)
     args = parser.parse_args()
 
     if not os.path.exists(TARGETS_FILE):
@@ -82,32 +81,31 @@ def main():
     with open(TARGETS_FILE, 'r') as f:
         targets = json.load(f)
 
-    region = args.region
-    print(f"Starting traceroute session for region: {region}")
-
     for target in targets:
-        output = run_traceroute(target)
-        if not output:
-            continue
+        # Try both ICMP and UDP to get more data points!
+        for flag in ["-I", "-U"]:
+            output = run_traceroute(target, flag)
+            if not output:
+                continue
 
-        extracted_hops = parse_hops(output)
-        if not extracted_hops:
-            continue
+            extracted_hops = parse_hops(output)
+            if not extracted_hops:
+                continue
 
-        payload = {
-            "region": region,
-            "hops": extracted_hops
-        }
+            print(f"Sending {len(extracted_hops)} hops (from {flag}) to backend...")
+            payload = {
+                "region": args.region,
+                "hops": extracted_hops
+            }
 
-        try:
-            print(f"Sending {len(extracted_hops)} hops to backend...")
-            response = requests.post(BACKEND_URL, json=payload, timeout=5)
-            if response.status_code == 200:
-                print("Successfully reported hops.")
-            else:
-                print(f"Backend returned status {response.status_code}: {response.text}")
-        except Exception as e:
-            print(f"Failed to send data to backend: {e}")
+            try:
+                response = requests.post(BACKEND_URL, json=payload, timeout=5)
+                if response.status_code == 201 or response.status_code == 200:
+                    print(f"Successfully reported {len(extracted_hops)} hops.")
+                else:
+                    print(f"Backend returned status {response.status_code}")
+            except Exception as e:
+                print(f"Failed to send data: {e}")
 
     print("All tasks completed. Finished.")
     #os.system("sudo shutdown -h now")
