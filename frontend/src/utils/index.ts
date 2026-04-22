@@ -47,7 +47,7 @@ export function isPointInPolygon(lat: number, lon: number, polygon: [number, num
   return inside;
 }
 
-export const MAX_LAND_HOP_DISTANCE_KM = 3000;
+export const MAX_LAND_HOP_DISTANCE_KM = 6500;
 
 export function findGeozone(lat: number, lon: number, zones: any[]): string | null {
   for (const zone of zones) {

@@ -220,6 +220,8 @@ yarn-error.log*
 *.tfvars
 *.tfvars.json
 .terraform.lock.hcl
+*.tfstate.lock.info
+.terraform.tfstate.lock.info
 
 architecture.md
 auxmd.md
