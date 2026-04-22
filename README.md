@@ -28,6 +28,8 @@ The frontend is the only part of this not hosted on GCP (it's in Github Pages)
 
 - Run 'terraform apply'
 - Wait for the VMs to finish
+- If you change backend code, run `terraform apply -replace="terraform_data.build_image"` to update the Cloud Run service.
+
 You will get an api which gives a mesh of the internet's topology
 
 Switch the hardcoded url in the frontend to your cloud_run url

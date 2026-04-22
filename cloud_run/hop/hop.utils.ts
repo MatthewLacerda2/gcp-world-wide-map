@@ -13,7 +13,7 @@ export interface Geozone {
 export const EARTH_RADIUS_METERS = 6371000;
 export const SPEED_OF_LIGHT_METERS = 299792458;
 export const SPEED_MULTIPLIER = 3;
-export const MAX_LAND_HOP_DISTANCE_KM = 3000;
+export const MAX_LAND_HOP_DISTANCE_KM = 6000;
 
 export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const dLat = (lat2 - lat1) * Math.PI / 180;
